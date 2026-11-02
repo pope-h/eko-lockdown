@@ -52,6 +52,14 @@ public static class BuildTools
         Run("Builds/Mac/EkoLockdown.app", BuildTarget.StandaloneOSX);
     }
 
+    [MenuItem("Eko/Build Windows")]
+    public static void BuildWindows()
+    {
+        CreateScene();
+        PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x); // IL2CPP can't cross-compile from a Mac
+        Run("Builds/Windows/EkoLockdown.exe", BuildTarget.StandaloneWindows64);
+    }
+
     static void Run(string path, BuildTarget target)
     {
         var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
