@@ -57,41 +57,54 @@ namespace Eko
 
         static bool HasMusic(Station s) => s.Tracks != null && s.Tracks.Length > 0;
 
-        /// A clip for the street party: the first Afrobeats track, or the news bed if none shipped.
-        public static AudioClip ClipFor(int i, out float bpm)
-        {
-            var s = Stations[i]; bpm = s.Bpm;
-            return HasMusic(s) ? s.Tracks[0] : NewsBed();
-        }
-
         static string Title(AudioClip c) => System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(c.name.Replace('_', ' '));
 
         void TuneTo(int i)
         {
             Current = i; hissT = 0.3f; tunedAt = Time.unscaledTime; CaptionUntil = 0f;
-            if (i < 0) { music.Stop(); GameUI.RadioCard("RADIO OFF", "R to turn it back on"); return; }
+            if (i < 0) { music.Stop(); Swap(null); GameUI.RadioCard("RADIO OFF", "R to turn it back on"); return; }
             var s = Stations[i];
             if (HasMusic(s))
             {
-                music.clip = s.Tracks[s.Track]; music.loop = false;
+                Swap(s.Tracks[s.Track]); music.loop = false;
                 // Tune in part-way through, the way a real station is already playing.
-                music.time = Random.Range(0.05f, 0.5f) * music.clip.length;
+                if (music.clip.loadState == AudioDataLoadState.Loaded) music.time = Random.Range(0.05f, 0.5f) * music.clip.length;
                 music.Play();
                 GameUI.RadioCard(s.Freq + "  " + s.Name, s.Genre + "   ·   now playing: " + Title(music.clip));
             }
             else
             {
-                music.clip = NewsBed(); music.loop = true; music.time = 0f; music.Play();
+                Swap(NewsBed()); music.loop = true; music.time = 0f; music.Play();
                 GameUI.RadioCard(s.Freq + "  " + s.Name, s.Genre);
             }
             nextTalk = s.Folder == null ? 2f : Random.Range(8f, 16f);
+        }
+
+        /// Change the playing clip, freeing the old song's decoded samples unless the street party still needs them.
+        void Swap(AudioClip next)
+        {
+            var old = music.clip;
+            music.Stop(); music.clip = next;
+            if (next != null && next.loadState == AudioDataLoadState.Unloaded) next.LoadAudioData();
+            if (old != null && old != next && old != Owambe.Clip && old.name != "news" && old.loadState == AudioDataLoadState.Loaded) old.UnloadAudioData();
+        }
+
+        /// The song the street party plays: the shortest one, so it costs the least memory.
+        public static AudioClip PartyClip
+        {
+            get
+            {
+                AudioClip best = null;
+                foreach (var s in Stations) if (HasMusic(s)) foreach (var c in s.Tracks) if (best == null || c.length < best.length) best = c;
+                return best != null ? best : NewsBed();
+            }
         }
 
         void NextTrack()
         {
             var s = Stations[Current];
             s.Track = (s.Track + 1) % s.Tracks.Length;
-            music.clip = s.Tracks[s.Track]; music.time = 0f; music.Play(); tunedAt = Time.unscaledTime;
+            Swap(s.Tracks[s.Track]); music.time = 0f; music.Play(); tunedAt = Time.unscaledTime;
             Caption = s.Freq + " " + s.Name + ":  Up next, " + Title(music.clip) + ".";
             CaptionUntil = Time.unscaledTime + 6f;
         }
@@ -106,7 +119,9 @@ namespace Eko
                 else if (Controls.RadioPrev) TuneTo(Current - 1 < -1 ? Stations.Count - 1 : Current - 1);
             }
             // A finished song rolls into the next one on the same station.
-            if (started && Current >= 0 && HasMusic(Stations[Current]) && !music.isPlaying && Time.unscaledTime - tunedAt > 2f) NextTrack();
+            // (Wait for the song to finish decoding first, or a slow phone would skip straight past it.)
+            if (started && Current >= 0 && HasMusic(Stations[Current]) && !music.isPlaying && Time.unscaledTime - tunedAt > 2f
+                && music.clip != null && (music.clip.loadState == AudioDataLoadState.Loaded || music.clip.loadState == AudioDataLoadState.Failed)) NextTrack();
 
             float vol = Player.I != null && Player.I.Driving != null ? 0.85f : 0.45f;
             if (Player.I != null) vol *= 0.15f + 0.85f * Mathf.Clamp01((Player.Flat(Player.I.Pos - new Vector3(262f, 0f, 225f)) - 20f) / 50f);

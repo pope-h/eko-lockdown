@@ -30,9 +30,11 @@ namespace Eko
             GameUI.SkipDialogue();
             yield return new WaitForSeconds(3.5f);
             yield return Shot("02_start_mushin");
+            Mem("after start");
 
             yield return Visit(new Vector2(40f, 77f), 270f, 14f, 6.5f, "03_market");
             yield return Visit(new Vector2(262f, 214f), 0f, 12f, 9f, "04_owambe");
+            Mem("at the party");
             yield return Visit(new Vector2(0f, -4f), 45f, 18f, 14f, "05_main_road");
             yield return Visit(new Vector2(-308f, -150f), 300f, 14f, 8f, "06_ajegunle");
             Story.I = 9;
@@ -99,6 +101,15 @@ namespace Eko
             yield return Shot("12_map");
             GameUI.Mode = Mode.None;
             Application.Quit();
+        }
+
+        /// What the game is holding in memory: the number that matters on phones.
+        static void Mem(string when)
+        {
+            long verts = 0; foreach (var mf in FindObjectsByType<MeshFilter>(FindObjectsSortMode.None)) if (mf.sharedMesh != null) verts += mf.sharedMesh.vertexCount;
+            long audio = 0; foreach (var c in Resources.FindObjectsOfTypeAll<AudioClip>()) if (c.loadState == AudioDataLoadState.Loaded) audio += (long)c.samples * c.channels * 4;
+            Debug.Log("EKOMEM " + when + ": allocated " + UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / 1048576 + " MB, reserved " + UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong() / 1048576
+                + " MB, graphics " + UnityEngine.Profiling.Profiler.GetAllocatedMemoryForGraphicsDriver() / 1048576 + " MB, mesh verts " + verts / 1000 + "k, decoded audio " + audio / 1048576 + " MB");
         }
 
         IEnumerator Visit(Vector2 p, float yaw, float pitch, float dist, string name)

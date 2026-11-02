@@ -579,16 +579,24 @@ namespace Eko
     public class Owambe : MonoBehaviour
     {
         public static float Beat;
-        AudioSource src; float bpm;
+        public static AudioClip Clip;
+        AudioSource src; const float Bpm = 104f;
 
         void Start()
         {
             src = gameObject.AddComponent<AudioSource>();
-            src.clip = Radio.ClipFor(0, out bpm); src.loop = true; src.spatialBlend = 1f; src.rolloffMode = AudioRolloffMode.Linear;
-            src.minDistance = 10f; src.maxDistance = 85f; src.volume = 0.9f; src.dopplerLevel = 0f; src.Play();
+            Clip = src.clip = Radio.PartyClip; src.loop = true; src.spatialBlend = 1f; src.rolloffMode = AudioRolloffMode.Linear;
+            src.minDistance = 10f; src.maxDistance = 85f; src.volume = 0.9f; src.dopplerLevel = 0f;
         }
 
-        void Update() { Beat = (src != null && src.isPlaying ? src.time : Time.time) * bpm / 60f; }
+        /// Only plays (and only holds the decoded song in memory) while you are within earshot.
+        void Update()
+        {
+            bool near = Player.I != null && Player.Flat(Player.I.Pos - transform.position) < 120f && GameUI.Mode != Mode.Intro;
+            if (near && !src.isPlaying) { if (Clip.loadState == AudioDataLoadState.Unloaded) Clip.LoadAudioData(); src.Play(); }
+            else if (!near && src.isPlaying) { src.Stop(); if (Clip.loadState == AudioDataLoadState.Loaded) Clip.UnloadAudioData(); }
+            Beat = (src.isPlaying ? src.time : Time.time) * Bpm / 60f;
+        }
     }
 
     /// Keeps the streets full near you: pedestrians and traffic are recycled from far away to nearby.

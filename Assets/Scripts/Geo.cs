@@ -98,6 +98,7 @@ namespace Eko
                 var mesh = new Mesh { indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
                 mesh.SetVertices(kv.Value.v); mesh.SetNormals(kv.Value.n); mesh.SetUVs(0, kv.Value.uv); mesh.SetTriangles(kv.Value.t, 0);
                 mesh.RecalculateBounds();
+                mesh.UploadMeshData(true); // GPU copy only: nothing reads these back, and phones need the memory
                 list.Add((mesh, kv.Key));
             }
             return list;
