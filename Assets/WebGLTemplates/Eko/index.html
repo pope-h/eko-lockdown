@@ -121,7 +121,7 @@
         canvas.className = "unity-mobile";
 
         // Phones have very dense screens; rendering every pixel costs more than it shows.
-        config.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+        config.devicePixelRatio = 1; // phones: their screens are dense enough, and every pixel costs memory
         document.body.className = "eko-mobile";
         canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 

@@ -108,7 +108,7 @@ namespace Eko
         static void Water()
         {
             G(Waterside).Ground(Mats.Water, new Rect(-1000, -900, 2600, 1800), -0.6f, 30f);
-            G(Waterside).Ground(Mats.Glint, new Rect(-1000, -900, 2600, 1800), -0.57f, 45f);
+            if (!TouchControls.Lite) G(Waterside).Ground(Mats.Glint, new Rect(-1000, -900, 2600, 1800), -0.57f, 45f);
         }
 
         static void Land(Grid3 g)

@@ -12,6 +12,8 @@ namespace Eko
     {
         /// Show the touch HUD: on phones and tablets, after any touch, or with -ekotouch for testing.
         public static bool On;
+        /// Light mode for phones: iOS Safari kills pages that use too much memory. -ekomobile forces it for testing.
+        public static bool Lite => Application.isMobilePlatform || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ekomobile") >= 0;
 
         class Btn { public string Id, Label; public Vector2 C; public float R; public bool Hold, Down; }
         readonly List<Btn> btns = new List<Btn>();
@@ -27,7 +29,7 @@ namespace Eko
 
         void Awake()
         {
-            On = Application.isMobilePlatform || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ekotouch") >= 0;
+            On = Lite || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-ekotouch") >= 0;
             Input.multiTouchEnabled = true;
         }
 

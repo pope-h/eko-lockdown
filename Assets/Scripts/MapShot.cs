@@ -13,7 +13,8 @@ namespace Eko
             var B = City.MapBounds;
             if (Tex == null)
             {
-                Tex = new RenderTexture(2048, Mathf.RoundToInt(2048 * B.height / B.width), 24) { antiAliasing = 2, useMipMap = true, autoGenerateMips = true, filterMode = FilterMode.Trilinear, name = "MapShot" };
+                int w = TouchControls.Lite ? 1024 : 2048; // phones: a quarter of the memory
+                Tex = new RenderTexture(w, Mathf.RoundToInt(w * B.height / B.width), 24) { antiAliasing = TouchControls.Lite ? 1 : 2, useMipMap = !TouchControls.Lite, autoGenerateMips = !TouchControls.Lite, filterMode = FilterMode.Bilinear, name = "MapShot" };
             }
             var go = new GameObject("MapCam");
             var cam = go.AddComponent<Camera>();

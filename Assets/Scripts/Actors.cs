@@ -732,12 +732,13 @@ namespace Eko
             RenderSettings.fog = true; RenderSettings.fogMode = FogMode.Linear; RenderSettings.fogStartDistance = 160f; RenderSettings.fogEndDistance = 620f;
             if (RenderSettings.skybox != null) RenderSettings.skybox = new Material(RenderSettings.skybox);
             QualitySettings.shadowDistance = 90f;
-            if (Application.isMobilePlatform)
+            if (TouchControls.Lite)
             {
-                // Phones: shorter shadows and view, fewer people and cars.
-                QualitySettings.shadowDistance = 40f; sun.shadows = LightShadows.Hard;
-                cam.farClipPlane = 420f; RenderSettings.fogStartDistance = 110f; RenderSettings.fogEndDistance = 400f;
-                Population.WalkerCount = 20; Population.CarCount = 14; Population.PatrolMax = 9;
+                // Phones: no shadows, half-size textures, no anti-aliasing, a short view, fewer people and cars.
+                sun.shadows = LightShadows.None; QualitySettings.shadows = ShadowQuality.Disable;
+                QualitySettings.antiAliasing = 0; QualitySettings.globalTextureMipmapLimit = 1;
+                cam.farClipPlane = 300f; RenderSettings.fogStartDistance = 70f; RenderSettings.fogEndDistance = 290f;
+                Population.WalkerCount = 14; Population.CarCount = 10; Population.PatrolMax = 8;
             }
 
             var host = new GameObject("Eko");

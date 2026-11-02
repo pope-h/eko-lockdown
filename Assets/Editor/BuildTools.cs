@@ -41,6 +41,11 @@ public static class BuildTools
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
         PlayerSettings.WebGL.decompressionFallback = true;
         PlayerSettings.stripEngineCode = true;
+        // Grow memory in small steps up to 1 GB, instead of doubling toward 2 GB: iOS Safari kills pages that reserve too much.
+        PlayerSettings.WebGL.initialMemorySize = 128;
+        PlayerSettings.WebGL.maximumMemorySize = 1024;
+        PlayerSettings.WebGL.memoryGrowthMode = WebGLMemoryGrowthMode.Linear;
+        PlayerSettings.WebGL.linearMemoryGrowthStep = 32;
         PlayerSettings.WebGL.template = "PROJECT:Eko"; // Assets/WebGLTemplates/Eko: phone-friendly page
         Run("Builds/WebGL", BuildTarget.WebGL);
     }
