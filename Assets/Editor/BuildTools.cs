@@ -36,8 +36,11 @@ public static class BuildTools
     public static void BuildWebGL()
     {
         CreateScene();
-        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
-        PlayerSettings.WebGL.decompressionFallback = false;
+        // Gzip with the fallback decoder: about a third of the download, and it works on any static
+        // host (itch.io, GitHub Pages) without special Content-Encoding headers.
+        PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
+        PlayerSettings.WebGL.decompressionFallback = true;
+        PlayerSettings.stripEngineCode = true;
         PlayerSettings.WebGL.template = "PROJECT:Eko"; // Assets/WebGLTemplates/Eko: phone-friendly page
         Run("Builds/WebGL", BuildTarget.WebGL);
     }

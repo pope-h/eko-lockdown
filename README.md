@@ -4,6 +4,8 @@ A third-person open-city game set in Lagos during the early days of an outbreak,
 
 Lagos has Eko Fever. The government says it is under control, and the Taskforce takes anyone with dark veins to the quarantine camp in Ikorodu. You are Dayo, a danfo driver who is already infected. Work odd jobs across the city to raise ₦25,000 for ZX, the one dose that stops the fever, before the Taskforce sees your arm.
 
+**Play in your browser:** https://pope-h.github.io/eko-lockdown/ (desktop or phone, landscape)
+
 ## Playing
 
 - **Move:** WASD. **Run:** Shift. **Sneak:** C. **Jump:** Space.
