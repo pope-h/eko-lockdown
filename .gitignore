@@ -1,0 +1,15 @@
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/Builds/
+/MemoryCaptures/
+*.csproj
+*.sln
+*.log
+.vscode/
+.DS_Store
+*.pidb
+*.user
+*.userprefs
