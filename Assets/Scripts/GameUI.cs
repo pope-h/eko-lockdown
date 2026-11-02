@@ -48,7 +48,7 @@ namespace Eko
             else if (Mode == Mode.Map && (Controls.MapKey || Input.GetKeyDown(KeyCode.Escape))) Mode = Mode.None;
             if (Mode == Mode.None && Controls.Dose)
             {
-                if (Game.TakeDose()) Toast("You take a dose. The veins fade."); else Toast("No doses. Look for the green glow on the streets, or buy one from Mama Put or the Plug.", true);
+                if (Game.TakeDose()) Toast("You take a dose. The veins fade."); else Toast("No doses. Find a white cross on the map, or buy one from Mama Put or the Plug.", true);
             }
             if (Mode == Mode.Dialogue && lines != null)
             {
@@ -150,9 +150,10 @@ namespace Eko
         void Prompts()
         {
             var p = Player.I; string t = null;
-            if (p.Driving != null) t = "[F]  Get out";
-            else if (p.Near != null) t = "[E]  " + p.Near.Prompt;
-            else if (p.NearCar != null) t = "[F]  " + (p.NearCar.State == Car.Mode.Traffic ? "Take the " : "Drive the ") + p.NearCar.Label.ToLower();
+            bool touch = TouchControls.On;
+            if (p.Driving != null) t = touch ? null : "[F]  Get out";
+            else if (p.Near != null) t = (touch ? "" : "[E]  ") + p.Near.Prompt;
+            else if (p.NearCar != null) t = (touch ? "" : "[F]  ") + (p.NearCar.State == Car.Mode.Traffic ? "Take the " : "Drive the ") + p.NearCar.Label.ToLower();
             if (t != null) { Fill(new Rect(W / 2 - 230, H - 168, 460, 34), new Color(0, 0, 0, 0.55f)); GUI.Label(new Rect(W / 2 - 230, H - 166, 460, 30), t, new GUIStyle(label) { alignment = TextAnchor.MiddleCenter }); }
         }
 
@@ -208,18 +209,21 @@ namespace Eko
             if (Radio.Current >= 0) Shadowed(new Rect(W - 360, 48, 346, 24), Radio.Stations[Radio.Current].Freq + " " + Radio.Stations[Radio.Current].Name + "   ·   R / T", new GUIStyle(small) { alignment = TextAnchor.MiddleRight }, new Color(1f, 0.85f, 0.4f));
             if (Time.unscaledTime < Radio.CaptionUntil) { float cw = Mathf.Min(640f, W - 520f - 280f); Fill(new Rect(510, 14, cw, 64), new Color(0, 0, 0, 0.5f)); GUI.Label(new Rect(518, 18, cw - 16, 58), Radio.Caption, new GUIStyle(small) { fontSize = 15, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(1f, 0.9f, 0.65f) } }); }
 
+            // On phones the bottom corners belong to the thumbs: fever goes under the objective, the map to the top right.
+            bool touch = TouchControls.On;
+            float fy = touch ? 100f : H - 90f;
             float f = Mathf.Clamp01(Game.Inf / 100f);
-            Fill(new Rect(14, H - 60, 270, 22), new Color(0, 0, 0, 0.6f));
-            Fill(new Rect(16, H - 58, 266 * f, 18), Color.Lerp(new Color(0.4f, 0.85f, 0.3f), new Color(0.9f, 0.15f, 0.1f), f));
-            Fill(new Rect(16 + 266 * Game.ShowingAt / 100f, H - 62, 2, 26), Color.white);
-            Shadowed(new Rect(14, H - 90, 420, 26), (Game.Bitten ? "FEVER" : "FEVER  ·  cured with ZX") + "   ·   Doses " + Game.Doses + "   ·   Q to take one", small, Game.IsCovered ? new Color(0.75f, 0.95f, 0.65f) : new Color(1f, 0.45f, 0.35f));
+            Fill(new Rect(14, fy + 30, 270, 22), new Color(0, 0, 0, 0.6f));
+            Fill(new Rect(16, fy + 32, 266 * f, 18), Color.Lerp(new Color(0.4f, 0.85f, 0.3f), new Color(0.9f, 0.15f, 0.1f), f));
+            Fill(new Rect(16 + 266 * Game.ShowingAt / 100f, fy + 28, 2, 26), Color.white);
+            Shadowed(new Rect(14, fy, 420, 26), (Game.Bitten ? "FEVER" : "FEVER  ·  cured with ZX") + "   ·   Doses " + Game.Doses + (touch ? "" : "   ·   Q to take one"), small, Game.IsCovered ? new Color(0.75f, 0.95f, 0.65f) : new Color(1f, 0.45f, 0.35f));
             var p = Player.I;
-            if (!Game.IsCovered) Shadowed(new Rect(14, H - 34, 400, 24), "Your veins are showing", small, new Color(1f, 0.45f, 0.35f));
-            else if (p != null && p.Sneaking) Shadowed(new Rect(14, H - 34, 400, 24), "Sneaking", small, new Color(0.7f, 0.8f, 1f));
+            if (!Game.IsCovered) Shadowed(new Rect(14, fy + 56, 400, 24), "Your veins are showing", small, new Color(1f, 0.45f, 0.35f));
+            else if (p != null && p.Sneaking) Shadowed(new Rect(14, fy + 56, 400, 24), "Sneaking", small, new Color(0.7f, 0.8f, 1f));
             if (p != null && p.Driving != null)
-                Shadowed(new Rect(W - 520, H - 90, 250, 40), Mathf.RoundToInt(Mathf.Abs(p.Driving.Speed) * 3.6f) + " km/h", new GUIStyle(label) { fontSize = 30, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleRight }, Color.white);
+                Shadowed(touch ? new Rect(W / 2 - 125, 84, 250, 40) : new Rect(W - 520, H - 90, 250, 40), Mathf.RoundToInt(Mathf.Abs(p.Driving.Speed) * 3.6f) + " km/h", new GUIStyle(label) { fontSize = 30, fontStyle = FontStyle.Bold, alignment = touch ? TextAnchor.MiddleCenter : TextAnchor.MiddleRight }, Color.white);
 
-            Minimap(new Rect(W - 234, H - 234, 220, 220));
+            Minimap(touch ? TouchControls.MinimapRect : new Rect(W - 234, H - 234, 220, 220));
         }
 
         // ── Maps ─────────────────────────────────────────────────────────────
@@ -277,7 +281,7 @@ namespace Eko
             }
             MapContent(w => new Vector2(area.width / 2f + (w.x - c.x) * k, area.height / 2f - (w.y - c.y) * k), false);
             GUI.EndGroup(); GuiOffset = Vector2.zero;
-            GUI.Label(new Rect(area.x, area.yMax + 2, area.width, 18), "M  map   ·   scroll  zoom", new GUIStyle(small) { fontSize = 12, alignment = TextAnchor.MiddleRight });
+            GUI.Label(new Rect(area.x, area.yMax + 2, area.width, 18), TouchControls.On ? "tap for map" : "M  map   ·   scroll  zoom", new GUIStyle(small) { fontSize = 12, alignment = TextAnchor.MiddleRight });
         }
 
         static float mapZoom = 1f;
@@ -321,7 +325,9 @@ namespace Eko
             GUILayout.Space(8);
             GUILayout.Label("Your fever climbs on its own. Past the white line, your veins show: take a street dose (Q) to push it down. Taskforce officers in orange vests chase anyone showing. They are slower than your sprint and can't catch a car. If they catch you, it's game over.", small);
             GUILayout.Space(14);
-            GUILayout.Label("WASD  move      Shift  run      C  sneak      Space  jump      E  talk / use\nF  get in or out of a vehicle      Q  take a dose      M  map      R / T  radio      H  horn\nRight mouse drag or arrow keys  turn the camera      Scroll  zoom", small);
+            GUILayout.Label(TouchControls.On
+                ? "Left thumb: move (push to the edge to run). Right thumb: drag to look, pinch to zoom.\nButtons on the right change with what you are doing. Tap the minimap for the full map."
+                : "WASD  move      Shift  run      C  sneak      Space  jump      E  talk / use\nF  get in or out of a vehicle      Q  take a dose      M  map      R / T  radio      H  horn\nRight mouse drag or arrow keys  turn the camera      Scroll  zoom", small);
             GUILayout.Space(24);
             if (Btn("Begin")) { Mode = Mode.None; Bootstrap.StartCampaign(); }
             GUILayout.Space(10);
@@ -357,7 +363,7 @@ namespace Eko
             GUI.Label(new Rect(170, H - 196, 800, 34), who.ToUpper(), Colored(new GUIStyle(label) { fontStyle = FontStyle.Bold, fontSize = 22 }, col));
             int n = Mathf.Min(text.Length, Mathf.FloorToInt(shown));
             GUI.Label(new Rect(170, H - 160, W - 260, 140), text.Substring(0, n), new GUIStyle(label) { fontSize = 22 });
-            GUI.Label(new Rect(W - 300, H - 40, 280, 28), shown >= text.Length ? "E · continue" : "E · skip", new GUIStyle(small) { alignment = TextAnchor.MiddleRight });
+            GUI.Label(new Rect(W - 300, H - 40, 280, 28), (TouchControls.On ? "tap" : "E") + (shown >= text.Length ? " · continue" : " · skip"), new GUIStyle(small) { alignment = TextAnchor.MiddleRight });
         }
 
         void ChoiceMenu()

@@ -10,6 +10,7 @@ Lagos has Eko Fever. The government says it is under control, and the Taskforce 
 - **Talk / use / doors:** E. **Get in or out of a vehicle:** F. **Horn:** H.
 - **Take a street dose:** Q. **Map:** M (scroll to zoom). **Radio:** R / T.
 - **Camera:** right mouse drag or arrow keys. Scroll to zoom.
+- **Phone (landscape):** left thumb is a joystick (push to the edge to run, or drive). Drag with the right thumb to look, pinch to zoom. The buttons on the right change with what you are doing. Tap the minimap for the full map.
 
 Your fever climbs on its own. Past the white line your veins show, and Taskforce officers in orange vests will chase you. They are slower than your sprint and cannot catch a car. If they catch you, you are arrested: game over, with a retry from your last checkpoint.
 

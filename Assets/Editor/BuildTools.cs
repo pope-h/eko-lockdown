@@ -38,6 +38,7 @@ public static class BuildTools
         CreateScene();
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
         PlayerSettings.WebGL.decompressionFallback = false;
+        PlayerSettings.WebGL.template = "PROJECT:Eko"; // Assets/WebGLTemplates/Eko: phone-friendly page
         Run("Builds/WebGL", BuildTarget.WebGL);
     }
 

@@ -4,33 +4,35 @@ using UnityEngine;
 // Eko Lockdown: controls, camera, the player, and everyone else on the streets.
 namespace Eko
 {
-    /// All input goes through here, so touch controls can be added in one place later.
+    /// All input goes through here: keyboard and mouse, plus the on-screen controls on phones (Touch).
     public static class Controls
     {
         static float K(KeyCode a) => Input.GetKey(a) ? 1f : 0f;
         public static Vector2 Move => Vector2.ClampMagnitude(new Vector2(K(KeyCode.D) - K(KeyCode.A), K(KeyCode.W) - K(KeyCode.S)) + Touch.Move, 1f);
         public static bool Run => Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || Touch.Run;
-        public static bool Crouch => Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.LeftControl);
-        public static bool Jump => Input.GetKeyDown(KeyCode.Space);
+        public static bool Crouch => Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.LeftControl) || Touch.Sneak;
+        public static bool Jump => Input.GetKeyDown(KeyCode.Space) || Touch.Take(ref Touch.JumpBtn);
         public static bool Interact => Input.GetKeyDown(KeyCode.E) || Touch.Take(ref Touch.Act);
         public static bool CarKey => Input.GetKeyDown(KeyCode.F) || Touch.Take(ref Touch.CarBtn);
         public static bool Dose => Input.GetKeyDown(KeyCode.Q) || Touch.Take(ref Touch.DoseBtn);
-        public static bool MapKey => Input.GetKeyDown(KeyCode.M);
-        public static bool RadioNext => Input.GetKeyDown(KeyCode.R);
+        public static bool MapKey => Input.GetKeyDown(KeyCode.M) || Touch.Take(ref Touch.MapBtn);
+        public static bool RadioNext => Input.GetKeyDown(KeyCode.R) || Touch.Take(ref Touch.RadioBtn);
         public static bool RadioPrev => Input.GetKeyDown(KeyCode.T);
-        public static bool Horn => Input.GetKeyDown(KeyCode.H);
+        public static bool Horn => Input.GetKeyDown(KeyCode.H) || Touch.Take(ref Touch.HornBtn);
         public static float Throttle => Move.y;
         public static float Steer => Move.x;
-        public static bool Handbrake => Input.GetKey(KeyCode.Space);
-        public static float CamYaw => (K(KeyCode.RightArrow) - K(KeyCode.LeftArrow)) * 100f * Time.deltaTime + (Input.GetMouseButton(1) ? Input.GetAxis("Mouse X") * 4f : 0f);
-        public static float CamPitch => (K(KeyCode.DownArrow) - K(KeyCode.UpArrow)) * 60f * Time.deltaTime - (Input.GetMouseButton(1) ? Input.GetAxis("Mouse Y") * 2.5f : 0f);
-        public static float Zoom => Mathf.Clamp(Input.mouseScrollDelta.y, -1f, 1f) + (K(KeyCode.Equals) + K(KeyCode.KeypadPlus) - K(KeyCode.Minus) - K(KeyCode.KeypadMinus)) * 3f * Time.deltaTime;
+        public static bool Handbrake => Input.GetKey(KeyCode.Space) || Touch.Brake;
+        public static float CamYaw => (K(KeyCode.RightArrow) - K(KeyCode.LeftArrow)) * 100f * Time.deltaTime + (Input.GetMouseButton(1) ? Input.GetAxis("Mouse X") * 4f : 0f) + Touch.Take(ref Touch.LookX);
+        public static float CamPitch => (K(KeyCode.DownArrow) - K(KeyCode.UpArrow)) * 60f * Time.deltaTime - (Input.GetMouseButton(1) ? Input.GetAxis("Mouse Y") * 2.5f : 0f) + Touch.Take(ref Touch.LookY);
+        public static float Zoom => Mathf.Clamp(Input.mouseScrollDelta.y, -1f, 1f) + (K(KeyCode.Equals) + K(KeyCode.KeypadPlus) - K(KeyCode.Minus) - K(KeyCode.KeypadMinus)) * 3f * Time.deltaTime + Touch.Take(ref Touch.Zoom);
 
-        /// Placeholder for on-screen controls on phones; filled in by a touch HUD later.
+        /// Filled in every frame by TouchControls. One-shot presses are consumed by whoever reads them.
         public static class Touch
         {
-            public static Vector2 Move; public static bool Run, Act, CarBtn, DoseBtn;
+            public static Vector2 Move; public static bool Run, Sneak, Brake, Act, CarBtn, DoseBtn, JumpBtn, MapBtn, RadioBtn, HornBtn;
+            public static float LookX, LookY, Zoom;
             public static bool Take(ref bool b) { bool v = b; b = false; return v; }
+            public static float Take(ref float f) { float v = f; f = 0f; return v; }
         }
     }
 
@@ -180,7 +182,7 @@ namespace Eko
             Driving = c; c.TakeOver(); CC.enabled = false;
             transform.SetParent(c.transform, false); transform.localPosition = c.Seat; transform.localRotation = Quaternion.identity;
             Body.Seated = true; Body.Driving = true;
-            GameUI.Toast((stolen ? "\"Ah! Take am, take am!\" " : "") + "You take the " + c.Label.ToLower() + ". W/S drive, A/D steer, Space brake, H horn, F to get out.");
+            GameUI.Toast((stolen ? "\"Ah! Take am, take am!\" " : "") + "You take the " + c.Label.ToLower() + (TouchControls.On ? ". Left stick drives and steers." : ". W/S drive, A/D steer, Space brake, H horn, F to get out."));
         }
 
         public void ExitCar()
@@ -597,7 +599,7 @@ namespace Eko
         readonly List<Car> traffic = new List<Car>();
         readonly List<Enforcer> patrols = new List<Enforcer>();
         float tick; Transform root;
-        const int WalkerCount = 34, CarCount = 22, PatrolMax = 12;
+        public static int WalkerCount = 34, CarCount = 22, PatrolMax = 12;
         System.Random rng = new System.Random(77);
 
         public static void Begin(Transform world)
@@ -722,9 +724,16 @@ namespace Eko
             RenderSettings.fog = true; RenderSettings.fogMode = FogMode.Linear; RenderSettings.fogStartDistance = 160f; RenderSettings.fogEndDistance = 620f;
             if (RenderSettings.skybox != null) RenderSettings.skybox = new Material(RenderSettings.skybox);
             QualitySettings.shadowDistance = 90f;
+            if (Application.isMobilePlatform)
+            {
+                // Phones: shorter shadows and view, fewer people and cars.
+                QualitySettings.shadowDistance = 40f; sun.shadows = LightShadows.Hard;
+                cam.farClipPlane = 420f; RenderSettings.fogStartDistance = 110f; RenderSettings.fogEndDistance = 400f;
+                Population.WalkerCount = 20; Population.CarCount = 14; Population.PatrolMax = 9;
+            }
 
             var host = new GameObject("Eko");
-            host.AddComponent<Bootstrap>(); host.AddComponent<GameUI>(); host.AddComponent<Radio>(); host.AddComponent<Sky>(); host.AddComponent<WaterMotion>(); host.AddComponent<Ambience>();
+            host.AddComponent<Bootstrap>(); host.AddComponent<GameUI>(); host.AddComponent<Radio>(); host.AddComponent<Sky>(); host.AddComponent<WaterMotion>(); host.AddComponent<Ambience>(); host.AddComponent<TouchControls>();
             Application.runInBackground = true; Application.targetFrameRate = 60;
             Restart();
         }

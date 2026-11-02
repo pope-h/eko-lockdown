@@ -85,6 +85,15 @@ namespace Eko
                 yield return new WaitForSeconds(0.3f);
                 yield return Shot("11b_driving_side");
             }
+            // The phone layout, as it looks with the touch controls on.
+            TouchControls.On = true;
+            yield return new WaitForSeconds(0.5f);
+            yield return Shot("11c_touch_driving");
+            Player.I.ExitCar();
+            Player.I.Teleport(new Vector2(14f, 84f));
+            yield return new WaitForSeconds(1f);
+            yield return Shot("11d_touch_foot");
+            TouchControls.On = false;
             GameUI.Mode = Mode.Map;
             yield return new WaitForSeconds(0.5f);
             yield return Shot("12_map");
